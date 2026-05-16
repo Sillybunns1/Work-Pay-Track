@@ -434,5 +434,4 @@ async function restoreSession() {
     await loadShifts();
   }
 }
-
-restoreSession(); 
+restoreSession();
