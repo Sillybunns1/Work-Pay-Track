@@ -1,92 +1,95 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Shift Pay Tracker</title>
-
-  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="description" content="Offline-capable pay tracker with login, register, shifts, lunch breaks, pay periods, and paydays." />
   <link rel="manifest" href="manifest.json" />
-
-  <meta name="theme-color" content="#4caf50" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Pay Tracker PWA</title>
 </head>
 <body>
+  <main class="app-shell">
+    <section class="card" id="authBox">
+      <h1>Pay Tracker</h1>
+      <p class="muted">Login or register to track your shifts on this device.</p>
 
-  <div class="box" id="loginBox">
-    <h1>Shift Pay Tracker</h1>
+      <label for="username">Username</label>
+      <input id="username" autocomplete="username" placeholder="Username" />
 
-    <div id="loginForm">
-      <h2>Login</h2>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="Password" />
 
-      <input id="loginUsername" placeholder="Username" />
-      <input id="loginPassword" type="password" placeholder="Password" />
+      <div class="button-row">
+        <button id="loginBtn" type="button">Login</button>
+        <button id="registerBtn" type="button" class="secondary">Register</button>
+      </div>
+      <p id="authMessage" class="message" role="status"></p>
+    </section>
 
-      <button id="loginBtn">Login</button>
+    <section class="card hidden" id="appBox">
+      <div class="topbar">
+        <div>
+          <h1>Pay Tracker</h1>
+          <p class="muted" id="welcomeText"></p>
+        </div>
+        <button id="logoutBtn" type="button" class="danger small">Logout</button>
+      </div>
 
-      <p class="switch-text">
-        Don’t have an account?
-        <button class="link-btn" id="showRegisterBtn">Register</button>
-      </p>
-    </div>
+      <div class="notice" id="installNotice">
+        PWA ready. Use your browser menu to install it after opening with a local server or GitHub Pages.
+      </div>
 
-    <div id="registerForm" class="hidden">
-      <h2>Register</h2>
+      <form id="shiftForm" class="grid-form">
+        <label>Date
+          <input type="date" id="date" required />
+        </label>
+        <label>Start
+          <input type="time" id="start" required />
+        </label>
+        <label>End
+          <input type="time" id="end" required />
+        </label>
+        <label>Lunch Start
+          <input type="time" id="lunchStart" />
+        </label>
+        <label>Lunch End
+          <input type="time" id="lunchEnd" />
+        </label>
+        <button type="submit" class="full">Add Shift</button>
+      </form>
 
-      <input id="registerUsername" placeholder="Create username" />
-      <input id="registerPassword" type="password" placeholder="Create password" />
-      <input id="confirmPassword" type="password" placeholder="Confirm password" />
+      <section class="summary-grid">
+        <div class="summary-card">
+          <span>Current Pay Period</span>
+          <strong id="periodLabel">—</strong>
+        </div>
+        <div class="summary-card">
+          <span>Next Payday</span>
+          <strong id="paydayLabel">—</strong>
+        </div>
+        <div class="summary-card">
+          <span>Total Hours</span>
+          <strong id="totalHours">0.00</strong>
+        </div>
+        <div class="summary-card">
+          <span>Estimated Pay</span>
+          <strong id="totalPay">$0.00</strong>
+        </div>
+      </section>
 
-      <button id="registerBtn">Create Account</button>
-
-      <p class="switch-text">
-        Already have an account?
-        <button class="link-btn" id="showLoginBtn">Login</button>
-      </p>
-    </div>
-  </div>
-
-  <div class="box hidden" id="appBox">
-    <h1>Shift Pay Tracker</h1>
-
-    <p class="rate">Base Pay: $20.16/hr</p>
-
-    <button class="logout" id="logoutBtn">Logout</button>
-
-    <label>Date</label>
-    <input type="date" id="date" />
-
-    <label>Start Time</label>
-    <input type="time" id="start" />
-
-    <label>End Time</label>
-    <input type="time" id="end" />
-
-    <h3>Lunch Break</h3>
-
-    <label>Lunch Start</label>
-    <input type="time" id="lunchStart" />
-
-    <label>Lunch End</label>
-    <input type="time" id="lunchEnd" />
-
-    <button id="addShiftBtn">Add Shift</button>
-
-    <div class="section">
-      <h2>Pay Period: 1st–15th</h2>
-      <div id="period1"></div>
-      <div class="total" id="total1"></div>
-    </div>
-
-    <div class="section">
-      <h2>Pay Period: 16th–End</h2>
-      <div id="period2"></div>
-      <div class="total" id="total2"></div>
-    </div>
-  </div>
+      <section class="section">
+        <div class="section-heading">
+          <h2>Shifts</h2>
+          <button id="clearBtn" type="button" class="danger small">Clear All</button>
+        </div>
+        <div id="shiftList" class="shift-list"></div>
+      </section>
+    </section>
+  </main>
 
   <script src="app.js"></script>
 </body>
 </html>
-```

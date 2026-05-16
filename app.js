@@ -1,126 +1,155 @@
 const BASE_RATE = 20.16;
-const EVENING_BONUS = 2;
-const NIGHT_BONUS = 3;
-const WEEKEND_BONUS = 2;
+const EVENING_BONUS = 2;      // Weekends or 6 PM - 10 PM
+const NIGHT_BONUS = 3;        // Any day 10 PM - 6 AM
 
-let currentUser = null;
+let currentUser = localStorage.getItem("currentUser") || null;
 let shifts = [];
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("loginBtn").addEventListener("click", login);
-  document.getElementById("registerBtn").addEventListener("click", register);
-  document.getElementById("showRegisterBtn").addEventListener("click", showRegister);
-  document.getElementById("showLoginBtn").addEventListener("click", showLogin);
-  document.getElementById("logoutBtn").addEventListener("click", logout);
-  document.getElementById("addShiftBtn").addEventListener("click", addShift);
-});
+const $ = (id) => document.getElementById(id);
 
-function showRegister() {
-  document.getElementById("loginForm").classList.add("hidden");
-  document.getElementById("registerForm").classList.remove("hidden");
+function users() {
+  return JSON.parse(localStorage.getItem("users") || "{}");
 }
 
-function showLogin() {
-  document.getElementById("registerForm").classList.add("hidden");
-  document.getElementById("loginForm").classList.remove("hidden");
+function saveUsers(data) {
+  localStorage.setItem("users", JSON.stringify(data));
+}
+
+function shiftKey() {
+  return `shifts_${currentUser}`;
+}
+
+function setMessage(text) {
+  $("authMessage").textContent = text;
 }
 
 function register() {
-  const username = document.getElementById("registerUsername").value.trim();
-  const password = document.getElementById("registerPassword").value;
-  const confirmPassword = document.getElementById("confirmPassword").value;
+  const username = $("username").value.trim();
+  const password = $("password").value;
+  if (!username || !password) return setMessage("Enter a username and password.");
 
-  if (!username || !password || !confirmPassword) {
-    alert("Please fill out all registration fields.");
-    return;
-  }
+  const allUsers = users();
+  if (allUsers[username]) return setMessage("That username already exists. Try logging in.");
 
-  if (password !== confirmPassword) {
-    alert("Passwords do not match.");
-    return;
-  }
-
-  const users = JSON.parse(localStorage.getItem("users") || "{}");
-
-  if (users[username]) {
-    alert("That username already exists.");
-    return;
-  }
-
-  users[username] = { password };
-  localStorage.setItem("users", JSON.stringify(users));
-
-  alert("Account created! Please log in.");
-
-  document.getElementById("registerUsername").value = "";
-  document.getElementById("registerPassword").value = "";
-  document.getElementById("confirmPassword").value = "";
-
-  showLogin();
+  allUsers[username] = { password };
+  saveUsers(allUsers);
+  login(true);
 }
 
-function login() {
-  const username = document.getElementById("loginUsername").value.trim();
-  const password = document.getElementById("loginPassword").value;
+function login(fromRegister = false) {
+  const username = $("username").value.trim();
+  const password = $("password").value;
+  if (!username || !password) return setMessage("Enter a username and password.");
 
-  if (!username || !password) {
-    alert("Please enter your username and password.");
-    return;
-  }
-
-  const users = JSON.parse(localStorage.getItem("users") || "{}");
-
-  if (!users[username]) {
-    alert("Account not found. Please register first.");
-    return;
-  }
-
-  if (users[username].password !== password) {
-    alert("Incorrect password.");
-    return;
-  }
+  const allUsers = users();
+  if (!allUsers[username]) return setMessage("Account not found. Use Register first.");
+  if (allUsers[username].password !== password) return setMessage("Wrong password.");
 
   currentUser = username;
-  shifts = JSON.parse(localStorage.getItem(getShiftKey()) || "[]");
-
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("appBox").classList.remove("hidden");
-
+  localStorage.setItem("currentUser", currentUser);
+  shifts = JSON.parse(localStorage.getItem(shiftKey()) || "[]");
+  $("authBox").classList.add("hidden");
+  $("appBox").classList.remove("hidden");
+  $("welcomeText").textContent = fromRegister ? `Welcome, ${currentUser}!` : `Logged in as ${currentUser}`;
   render();
 }
 
 function logout() {
   currentUser = null;
   shifts = [];
-
-  document.getElementById("appBox").classList.add("hidden");
-  document.getElementById("loginBox").classList.remove("hidden");
-
-  showLogin();
-}
-
-function getShiftKey() {
-  return `shifts_${currentUser}`;
+  localStorage.removeItem("currentUser");
+  $("password").value = "";
+  $("authBox").classList.remove("hidden");
+  $("appBox").classList.add("hidden");
 }
 
 function saveShifts() {
-  localStorage.setItem(getShiftKey(), JSON.stringify(shifts));
+  localStorage.setItem(shiftKey(), JSON.stringify(shifts));
 }
 
-function addShift() {
-  const date = document.getElementById("date").value;
-  const start = document.getElementById("start").value;
-  const end = document.getElementById("end").value;
-  const lunchStart = document.getElementById("lunchStart").value;
-  const lunchEnd = document.getElementById("lunchEnd").value;
+function parseLocal(date, time) {
+  return new Date(`${date}T${time}`);
+}
 
-  if (!date || !start || !end) {
-    alert("Please enter date, start time, and end time.");
-    return;
+function getShiftSegments(shift) {
+  let start = parseLocal(shift.date, shift.start);
+  let end = parseLocal(shift.date, shift.end);
+  if (end <= start) end.setDate(end.getDate() + 1);
+
+  let lunchStart = shift.lunchStart ? parseLocal(shift.date, shift.lunchStart) : null;
+  let lunchEnd = shift.lunchEnd ? parseLocal(shift.date, shift.lunchEnd) : null;
+  if (lunchStart && lunchEnd && lunchEnd <= lunchStart) lunchEnd.setDate(lunchEnd.getDate() + 1);
+
+  const segments = [];
+  for (let cursor = new Date(start); cursor < end;) {
+    const next = new Date(Math.min(cursor.getTime() + 15 * 60 * 1000, end.getTime()));
+    const isLunch = lunchStart && lunchEnd && cursor < lunchEnd && next > lunchStart;
+    if (!isLunch) segments.push([new Date(cursor), new Date(next)]);
+    cursor = next;
   }
+  return segments;
+}
 
-  shifts.push({ date, start, end, lunchStart, lunchEnd });
+function rateFor(dateObj) {
+  const day = dateObj.getDay();
+  const hour = dateObj.getHours() + dateObj.getMinutes() / 60;
+  const isWeekend = day === 0 || day === 6;
+  const isEvening = hour >= 18 && hour < 22;
+  const isNight = hour >= 22 || hour < 6;
+
+  if (isNight) return BASE_RATE + NIGHT_BONUS;
+  if (isWeekend || isEvening) return BASE_RATE + EVENING_BONUS;
+  return BASE_RATE;
+}
+
+function calculateShift(shift) {
+  const totals = { baseHours: 0, eveningHours: 0, nightHours: 0, pay: 0 };
+  getShiftSegments(shift).forEach(([start, end]) => {
+    const hours = (end - start) / 36e5;
+    const rate = rateFor(start);
+    totals.pay += hours * rate;
+    if (rate === BASE_RATE + NIGHT_BONUS) totals.nightHours += hours;
+    else if (rate === BASE_RATE + EVENING_BONUS) totals.eveningHours += hours;
+    else totals.baseHours += hours;
+  });
+  totals.hours = totals.baseHours + totals.eveningHours + totals.nightHours;
+  return totals;
+}
+
+function currentPayPeriod(date = new Date()) {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const day = date.getDate();
+  const startDay = day <= 15 ? 1 : 16;
+  const endDay = day <= 15 ? 15 : new Date(y, m + 1, 0).getDate();
+  return `${m + 1}/${startDay}/${y} - ${m + 1}/${endDay}/${y}`;
+}
+
+function nextPayday(date = new Date()) {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const day = date.getDate();
+  if (day < 8) return `${m + 1}/8/${y}`;
+  if (day < 23) return `${m + 1}/23/${y}`;
+  const next = new Date(y, m + 1, 8);
+  return `${next.getMonth() + 1}/8/${next.getFullYear()}`;
+}
+
+function addShift(event) {
+  event.preventDefault();
+  const shift = {
+    date: $("date").value,
+    start: $("start").value,
+    end: $("end").value,
+    lunchStart: $("lunchStart").value,
+    lunchEnd: $("lunchEnd").value
+  };
+  if (!shift.date || !shift.start || !shift.end) return alert("Missing date, start, or end.");
+  if ((shift.lunchStart && !shift.lunchEnd) || (!shift.lunchStart && shift.lunchEnd)) return alert("Add both lunch start and lunch end, or leave both blank.");
+
+  shifts.push(shift);
   saveShifts();
+  $("shiftForm").reset();
   render();
 }
 
@@ -130,97 +159,62 @@ function deleteShift(index) {
   render();
 }
 
-function calculateShift(shift) {
-  let start = new Date(`${shift.date}T${shift.start}`);
-  let end = new Date(`${shift.date}T${shift.end}`);
-
-  if (end <= start) end.setDate(end.getDate() + 1);
-
-  let totalMinutes = 0;
-  let eveningMinutes = 0;
-  let nightMinutes = 0;
-  let weekendMinutes = 0;
-
-  let current = new Date(start);
-
-  while (current < end) {
-    totalMinutes++;
-
-    const hour = current.getHours();
-    const day = current.getDay();
-
-    if (day === 0 || day === 6) weekendMinutes++;
-    if (hour >= 18 && hour < 22) eveningMinutes++;
-    if (hour >= 22 || hour < 6) nightMinutes++;
-
-    current.setMinutes(current.getMinutes() + 1);
-  }
-
-  const totalHours = totalMinutes / 60;
-  const eveningHours = eveningMinutes / 60;
-  const nightHours = nightMinutes / 60;
-  const weekendHours = weekendMinutes / 60;
-
-  const totalPay =
-    totalHours * BASE_RATE +
-    eveningHours * EVENING_BONUS +
-    nightHours * NIGHT_BONUS +
-    weekendHours * WEEKEND_BONUS;
-
-  return {
-    totalHours,
-    eveningHours,
-    nightHours,
-    weekendHours,
-    totalPay
-  };
+function clearShifts() {
+  if (!confirm("Delete all shifts for this user?")) return;
+  shifts = [];
+  saveShifts();
+  render();
 }
 
 function render() {
-  let period1HTML = "";
-  let period2HTML = "";
-  let period1Pay = 0;
-  let period2Pay = 0;
-  let period1Hours = 0;
-  let period2Hours = 0;
+  const list = $("shiftList");
+  let totalHours = 0;
+  let totalPay = 0;
 
-  shifts.forEach((shift, index) => {
-    const date = new Date(`${shift.date}T00:00`);
-    const dayOfMonth = date.getDate();
-    const calc = calculateShift(shift);
+  $("periodLabel").textContent = currentPayPeriod();
+  $("paydayLabel").textContent = nextPayday();
 
-    const shiftHTML = `
-      <div class="shift">
-        <strong>${shift.date}</strong><br>
-        Shift: ${shift.start}–${shift.end}<br>
-        Lunch: ${shift.lunchStart || "None"}–${shift.lunchEnd || "None"}<br>
-        Hours: ${calc.totalHours.toFixed(2)}<br>
-        Pay: $${calc.totalPay.toFixed(2)}
-        <button onclick="deleteShift(${index})">Delete</button>
-      </div>
-    `;
+  if (!shifts.length) {
+    list.innerHTML = `<p class="muted">No shifts yet.</p>`;
+  } else {
+    list.innerHTML = shifts.map((shift, index) => {
+      const calc = calculateShift(shift);
+      totalHours += calc.hours;
+      totalPay += calc.pay;
+      return `
+        <article class="shift">
+          <strong>${shift.date} • ${shift.start} - ${shift.end}</strong>
+          <div class="details">
+            Hours: ${calc.hours.toFixed(2)} | Pay: $${calc.pay.toFixed(2)}<br>
+            Base: ${calc.baseHours.toFixed(2)}h • Weekend/Evening: ${calc.eveningHours.toFixed(2)}h • Night: ${calc.nightHours.toFixed(2)}h<br>
+            Lunch: ${shift.lunchStart && shift.lunchEnd ? `${shift.lunchStart} - ${shift.lunchEnd}` : "None"}
+          </div>
+          <button class="danger small" type="button" onclick="deleteShift(${index})">Delete</button>
+        </article>`;
+    }).join("");
+  }
 
-    if (dayOfMonth <= 15) {
-      period1HTML += shiftHTML;
-      period1Pay += calc.totalPay;
-      period1Hours += calc.totalHours;
-    } else {
-      period2HTML += shiftHTML;
-      period2Pay += calc.totalPay;
-      period2Hours += calc.totalHours;
-    }
-  });
-
-  document.getElementById("period1").innerHTML = period1HTML || "<p>No shifts yet.</p>";
-  document.getElementById("period2").innerHTML = period2HTML || "<p>No shifts yet.</p>";
-
-  document.getElementById("total1").innerHTML =
-    `Hours: ${period1Hours.toFixed(2)}<br>Total Pay: $${period1Pay.toFixed(2)}`;
-
-  document.getElementById("total2").innerHTML =
-    `Hours: ${period2Hours.toFixed(2)}<br>Total Pay: $${period2Pay.toFixed(2)}`;
+  $("totalHours").textContent = totalHours.toFixed(2);
+  $("totalPay").textContent = `$${totalPay.toFixed(2)}`;
 }
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js").catch(console.error);
+  }
+}
+
+$("loginBtn").addEventListener("click", () => login(false));
+$("registerBtn").addEventListener("click", register);
+$("logoutBtn").addEventListener("click", logout);
+$("shiftForm").addEventListener("submit", addShift);
+$("clearBtn").addEventListener("click", clearShifts);
+
+registerServiceWorker();
+if (currentUser) {
+  shifts = JSON.parse(localStorage.getItem(shiftKey()) || "[]");
+  $("authBox").classList.add("hidden");
+  $("appBox").classList.remove("hidden");
+  $("welcomeText").textContent = `Logged in as ${currentUser}`;
+  render();
 }
