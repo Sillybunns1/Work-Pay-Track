@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Shift Pay Tracker</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+
+  <meta name="theme-color" content="#4caf50" />
+</head>
+<body>
+
+  <div class="box" id="loginBox">
+    <h1>Shift Pay Tracker</h1>
+    <h2>Login / Register</h2>
+
+    <input id="username" placeholder="Username" />
+    <input id="password" type="password" placeholder="Password" />
+
+    <button onclick="login()">Login / Register</button>
+  </div>
+
+  <div class="box hidden" id="appBox">
+    <h1>Shift Pay Tracker</h1>
+
+    <p class="rate">Base Pay: $20.16/hr</p>
+
+    <button class="logout" onclick="logout()">Logout</button>
+
+    <label>Date</label>
+    <input type="date" id="date" />
+
+    <label>Start Time</label>
+    <input type="time" id="start" />
+
+    <label>End Time</label>
+    <input type="time" id="end" />
+
+    <h3>Lunch Break</h3>
+
+    <label>Lunch Start</label>
+    <input type="time" id="lunchStart" />
+
+    <label>Lunch End</label>
+    <input type="time" id="lunchEnd" />
+
+    <button onclick="addShift()">Add Shift</button>
+
+    <div class="section">
+      <h2>Pay Period: 1st–15th</h2>
+      <div id="period1"></div>
+      <div class="total" id="total1"></div>
+    </div>
+
+    <div class="section">
+      <h2>Pay Period: 16th–End</h2>
+      <div id="period2"></div>
+      <div class="total" id="total2"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
