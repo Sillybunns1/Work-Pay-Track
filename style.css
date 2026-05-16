@@ -1,164 +1,118 @@
-:root {
-  --bg: #0f172a;
-  --card: rgba(255, 255, 255, 0.08);
-  --card-strong: rgba(255, 255, 255, 0.12);
-  --text: #f8fafc;
-  --muted: #cbd5e1;
-  --green: #22c55e;
-  --green-dark: #16a34a;
-  --red: #ef4444;
-  --border: rgba(255,255,255,0.14);
-}
-
-* {
-  box-sizing: border-box;
-}
-
 body {
   margin: 0;
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: var(--text);
-  background:
-    radial-gradient(circle at top left, #22c55e55, transparent 35%),
-    radial-gradient(circle at bottom right, #38bdf855, transparent 35%),
-    var(--bg);
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
   display: flex;
   justify-content: center;
-  padding: 24px;
+  padding: 25px;
 }
 
 .box {
   width: 100%;
-  max-width: 560px;
-  background: var(--card);
-  backdrop-filter: blur(18px);
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  padding: 24px;
-  box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+  max-width: 550px;
+  background: #1f1f1f;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
 
 .hidden {
   display: none;
 }
 
-h1 {
-  margin: 0 0 8px;
-  text-align: center;
-  font-size: 32px;
-}
-
-h2, h3 {
+h1, h2, h3 {
   text-align: center;
 }
 
 .rate {
   text-align: center;
-  color: #86efac;
-  font-weight: 700;
-  margin-bottom: 18px;
+  color: #7cff8a;
+  font-weight: bold;
 }
 
 label {
   display: block;
-  margin-top: 14px;
-  margin-bottom: 6px;
-  color: var(--muted);
-  font-size: 14px;
+  margin-top: 12px;
 }
 
 input {
   width: 100%;
-  padding: 14px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: rgba(15, 23, 42, 0.75);
-  color: white;
+  padding: 11px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 8px;
   font-size: 16px;
-  outline: none;
-}
-
-input:focus {
-  border-color: #86efac;
-  box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
+  box-sizing: border-box;
 }
 
 button {
   width: 100%;
-  padding: 14px;
-  margin-top: 18px;
+  padding: 12px;
+  margin-top: 15px;
   border: none;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  border-radius: 8px;
+  background: #4caf50;
   color: white;
   font-size: 16px;
-  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 12px 30px rgba(34,197,94,0.25);
 }
 
 button:hover {
-  transform: translateY(-1px);
+  background: #43a047;
 }
 
-.logout,
-.shift button {
-  background: linear-gradient(135deg, var(--red), #b91c1c);
-  box-shadow: 0 12px 30px rgba(239,68,68,0.22);
+.logout {
+  background: #c0392b;
+}
+
+.logout:hover {
+  background: #a93226;
+}
+
+.link-btn {
+  width: auto;
+  background: none;
+  color: #7cff8a;
+  padding: 0;
+  margin: 0;
+  font-size: 15px;
+  text-decoration: underline;
+}
+
+.link-btn:hover {
+  background: none;
+  color: #b6ffbd;
+}
+
+.switch-text {
+  text-align: center;
+  font-size: 15px;
 }
 
 .section {
-  margin-top: 24px;
-  background: var(--card-strong);
-  border: 1px solid var(--border);
-  padding: 18px;
-  border-radius: 24px;
+  margin-top: 20px;
+  background: #2a2a2a;
+  padding: 15px;
+  border-radius: 10px;
 }
 
 .shift {
-  background: rgba(15,23,42,0.55);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 14px;
-  margin-top: 12px;
+  border-bottom: 1px solid #444;
+  padding: 10px 0;
   font-size: 14px;
-  line-height: 1.6;
-}
-
-.shift strong {
-  font-size: 16px;
-  color: #bbf7d0;
 }
 
 .shift button {
-  padding: 10px;
-  font-size: 14px;
-  border-radius: 14px;
+  background: #c0392b;
+  margin-top: 8px;
+  padding: 7px;
+  font-size: 13px;
 }
 
 .total {
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(34,197,94,0.14);
-  color: #bbf7d0;
+  margin-top: 12px;
+  color: #7cff8a;
   font-size: 18px;
-  font-weight: 800;
-  text-align: center;
-}
-
-@media (max-width: 480px) {
-  body {
-    padding: 14px;
-  }
-
-  .box {
-    padding: 18px;
-    border-radius: 24px;
-  }
-
-  h1 {
-    font-size: 26px;
-  }
+  font-weight: bold;
 }
