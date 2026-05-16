@@ -6,6 +6,15 @@ const WEEKEND_BONUS = 2;
 let currentUser = null;
 let shifts = [];
 
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("loginBtn").addEventListener("click", login);
+  document.getElementById("registerBtn").addEventListener("click", register);
+  document.getElementById("showRegisterBtn").addEventListener("click", showRegister);
+  document.getElementById("showLoginBtn").addEventListener("click", showLogin);
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+  document.getElementById("addShiftBtn").addEventListener("click", addShift);
+});
+
 function showRegister() {
   document.getElementById("loginForm").classList.add("hidden");
   document.getElementById("registerForm").classList.remove("hidden");
@@ -31,7 +40,7 @@ function register() {
     return;
   }
 
-  let users = JSON.parse(localStorage.getItem("users") || "{}");
+  const users = JSON.parse(localStorage.getItem("users") || "{}");
 
   if (users[username]) {
     alert("That username already exists.");
@@ -41,7 +50,7 @@ function register() {
   users[username] = { password };
   localStorage.setItem("users", JSON.stringify(users));
 
-  alert("Account created! You can now log in.");
+  alert("Account created! Please log in.");
 
   document.getElementById("registerUsername").value = "";
   document.getElementById("registerPassword").value = "";
@@ -59,7 +68,7 @@ function login() {
     return;
   }
 
-  let users = JSON.parse(localStorage.getItem("users") || "{}");
+  const users = JSON.parse(localStorage.getItem("users") || "{}");
 
   if (!users[username]) {
     alert("Account not found. Please register first.");
@@ -76,9 +85,6 @@ function login() {
 
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("appBox").classList.remove("hidden");
-
-  document.getElementById("loginUsername").value = "";
-  document.getElementById("loginPassword").value = "";
 
   render();
 }
@@ -113,30 +119,9 @@ function addShift() {
     return;
   }
 
-  if ((lunchStart && !lunchEnd) || (!lunchStart && lunchEnd)) {
-    alert("Please enter both lunch start and lunch end.");
-    return;
-  }
-
-  shifts.push({
-    date,
-    start,
-    end,
-    lunchStart,
-    lunchEnd
-  });
-
+  shifts.push({ date, start, end, lunchStart, lunchEnd });
   saveShifts();
-  clearForm();
   render();
-}
-
-function clearForm() {
-  document.getElementById("date").value = "";
-  document.getElementById("start").value = "";
-  document.getElementById("end").value = "";
-  document.getElementById("lunchStart").value = "";
-  document.getElementById("lunchEnd").value = "";
 }
 
 function deleteShift(index) {
@@ -149,21 +134,7 @@ function calculateShift(shift) {
   let start = new Date(`${shift.date}T${shift.start}`);
   let end = new Date(`${shift.date}T${shift.end}`);
 
-  if (end <= start) {
-    end.setDate(end.getDate() + 1);
-  }
-
-  let lunchStart = null;
-  let lunchEnd = null;
-
-  if (shift.lunchStart && shift.lunchEnd) {
-    lunchStart = new Date(`${shift.date}T${shift.lunchStart}`);
-    lunchEnd = new Date(`${shift.date}T${shift.lunchEnd}`);
-
-    if (lunchEnd <= lunchStart) {
-      lunchEnd.setDate(lunchEnd.getDate() + 1);
-    }
-  }
+  if (end <= start) end.setDate(end.getDate() + 1);
 
   let totalMinutes = 0;
   let eveningMinutes = 0;
@@ -173,30 +144,14 @@ function calculateShift(shift) {
   let current = new Date(start);
 
   while (current < end) {
-    const isDuringLunch =
-      lunchStart &&
-      lunchEnd &&
-      current >= lunchStart &&
-      current < lunchEnd;
+    totalMinutes++;
 
-    if (!isDuringLunch) {
-      totalMinutes++;
+    const hour = current.getHours();
+    const day = current.getDay();
 
-      const hour = current.getHours();
-      const day = current.getDay();
-
-      if (day === 0 || day === 6) {
-        weekendMinutes++;
-      }
-
-      if (hour >= 18 && hour < 22) {
-        eveningMinutes++;
-      }
-
-      if (hour >= 22 || hour < 6) {
-        nightMinutes++;
-      }
-    }
+    if (day === 0 || day === 6) weekendMinutes++;
+    if (hour >= 18 && hour < 22) eveningMinutes++;
+    if (hour >= 22 || hour < 6) nightMinutes++;
 
     current.setMinutes(current.getMinutes() + 1);
   }
@@ -224,10 +179,8 @@ function calculateShift(shift) {
 function render() {
   let period1HTML = "";
   let period2HTML = "";
-
   let period1Pay = 0;
   let period2Pay = 0;
-
   let period1Hours = 0;
   let period2Hours = 0;
 
@@ -236,20 +189,12 @@ function render() {
     const dayOfMonth = date.getDate();
     const calc = calculateShift(shift);
 
-    const lunchText =
-      shift.lunchStart && shift.lunchEnd
-        ? `Lunch: ${shift.lunchStart}–${shift.lunchEnd}`
-        : "No lunch";
-
     const shiftHTML = `
       <div class="shift">
         <strong>${shift.date}</strong><br>
         Shift: ${shift.start}–${shift.end}<br>
-        ${lunchText}<br>
+        Lunch: ${shift.lunchStart || "None"}–${shift.lunchEnd || "None"}<br>
         Hours: ${calc.totalHours.toFixed(2)}<br>
-        Evening +$2 Hours: ${calc.eveningHours.toFixed(2)}<br>
-        Night +$3 Hours: ${calc.nightHours.toFixed(2)}<br>
-        Weekend +$2 Hours: ${calc.weekendHours.toFixed(2)}<br>
         Pay: $${calc.totalPay.toFixed(2)}
         <button onclick="deleteShift(${index})">Delete</button>
       </div>
@@ -266,11 +211,8 @@ function render() {
     }
   });
 
-  document.getElementById("period1").innerHTML =
-    period1HTML || "<p>No shifts yet.</p>";
-
-  document.getElementById("period2").innerHTML =
-    period2HTML || "<p>No shifts yet.</p>";
+  document.getElementById("period1").innerHTML = period1HTML || "<p>No shifts yet.</p>";
+  document.getElementById("period2").innerHTML = period2HTML || "<p>No shifts yet.</p>";
 
   document.getElementById("total1").innerHTML =
     `Hours: ${period1Hours.toFixed(2)}<br>Total Pay: $${period1Pay.toFixed(2)}`;
@@ -280,7 +222,5 @@ function render() {
 }
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
-    .then(() => console.log("Service Worker registered"))
-    .catch(error => console.log("Service Worker error:", error));
+  navigator.serviceWorker.register("service-worker.js");
 }
